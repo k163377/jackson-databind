@@ -10,6 +10,7 @@ import java.util.*;
 import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 
 public class POJOPropertiesCollectorTest
     extends BaseMapTest
@@ -229,6 +230,22 @@ public class POJOPropertiesCollectorTest
         public boolean isBloop() { return true; }
 
         public boolean getBloop() { return true; }
+    }
+
+    static class IsImplNameBean
+    {
+        public String getFoo() { return "foo"; }
+        public boolean isBar() { return true; }
+        public String getBaz() { return "baz"; }
+
+        static class AI extends NopAnnotationIntrospector
+        {
+            @Override
+            public String findImplicitPropertyName(AnnotatedMember member)
+            {
+                return member.getName().equals("getFoo") ? "isFoo" : null;
+            }
+        }
     }
 
     /*
@@ -491,6 +508,16 @@ public class POJOPropertiesCollectorTest
         assertTrue(prop._getters.value.hasAnnotation(A.class));
         assertNotNull(prop._getters.next);
         assertTrue(prop._getters.next.value.hasAnnotation(A.class));
+    }
+
+    public void testIsImplName() throws Exception
+    {
+        ObjectMapper mapper = new ObjectMapper()
+                .setVisibility(PropertyAccessor.IS_GETTER, JsonAutoDetect.Visibility.NONE)
+                .setAnnotationIntrospector(new IsImplNameBean.AI());
+
+        String result = mapper.writeValueAsString(new IsImplNameBean());
+        assertEquals("{\"baz\":\"baz\"}", result);
     }
 
     private void _verifyProperty(BeanDescription beanDesc,
