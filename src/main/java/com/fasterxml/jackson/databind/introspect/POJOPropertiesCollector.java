@@ -816,17 +816,23 @@ public class POJOPropertiesCollector
         boolean nameExplicit = (pn != null);
 
         if (!nameExplicit) { // no explicit name; must consider implicit
-            if (implName == null) {
-                implName = _accessorNaming.findNameForRegularGetter(m, m.getName());
-            }
-            if (implName == null) { // if not, must skip
-                implName = _accessorNaming.findNameForIsGetter(m, m.getName());
-                if (implName == null) {
-                    return;
-                }
-                visible = _visibilityChecker.isIsGetterVisible(m);
+            if (implName != null) {
+                // If implName begins with is, visibility evaluates as is-getter.
+                visible = implName.substring(0, 2).equalsIgnoreCase("is")
+                        ? _visibilityChecker.isIsGetterVisible(m)
+                        : _visibilityChecker.isGetterVisible(m);
             } else {
-                visible = _visibilityChecker.isGetterVisible(m);
+                implName = _accessorNaming.findNameForRegularGetter(m, m.getName());
+
+                if (implName == null) { // if not, must skip
+                    implName = _accessorNaming.findNameForIsGetter(m, m.getName());
+                    if (implName == null) {
+                        return;
+                    }
+                    visible = _visibilityChecker.isIsGetterVisible(m);
+                } else {
+                    visible = _visibilityChecker.isGetterVisible(m);
+                }
             }
         } else { // explicit indication of inclusion, but may be empty
             // we still need implicit name to link with other pieces
