@@ -788,7 +788,7 @@ public class POJOPropertiesCollector
         // @JsonAnyGetter?
         if (Boolean.TRUE.equals(ai.hasAnyGetter(m))) {
             if (_anyGetters == null) {
-                _anyGetters = new LinkedList<AnnotatedMember>();
+                _anyGetters = new LinkedList<>();
             }
             _anyGetters.add(m);
             return;
@@ -809,14 +809,13 @@ public class POJOPropertiesCollector
             _jsonValueAccessors.add(m);
             return;
         }
-        String implName; // from naming convention
+        String implName = ai.findImplicitPropertyName(m); // from naming convention
         boolean visible;
 
         PropertyName pn = ai.findNameForSerialization(m);
         boolean nameExplicit = (pn != null);
 
         if (!nameExplicit) { // no explicit name; must consider implicit
-            implName = ai.findImplicitPropertyName(m);
             if (implName == null) {
                 implName = _accessorNaming.findNameForRegularGetter(m, m.getName());
             }
@@ -831,7 +830,6 @@ public class POJOPropertiesCollector
             }
         } else { // explicit indication of inclusion, but may be empty
             // we still need implicit name to link with other pieces
-            implName = ai.findImplicitPropertyName(m);
             if (implName == null) {
                 implName = _accessorNaming.findNameForRegularGetter(m, m.getName());
                 if (implName == null) {
